@@ -101,21 +101,23 @@ class TSL5 extends EventEmitter {
     sendTallyUDP(ip, port, tally) {
         try {		
             if (!ip | !port | !tally){
-                throw 'Missing Parameter from call sendTSL5_UDP()'
+                throw 'Missing Parameter from call sendTallyUDP()'
             }
             let msg = this.constructPacket(tally)
     
             let client = dgram.createSocket('udp4');
             
             client.send(msg, port, ip, function(error) {
-                if (!error) {
-                    debug('TSL 5 UDP Data sent.', 'info');
+                if (error) {
+                    debug('Error sending TSL 5 UDP tally:', error)
+                } else {
+                    debug('TSL 5 UDP Data sent.');
                 }
                 client.close();
             });
         }
         catch (error) {
-            debug(`An error occured sending the TSL 5 UDP Message: ${error}`, 'error');
+            debug('Error sending TSL 5 UDP tally:', error);
         }
     }
 }

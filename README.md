@@ -15,7 +15,7 @@ var umd = new TSL5()
 umd.listenUDP(8900)
 
 umd.on('message', (msg) => {
-    console.log(msg)
+    console.log("Tally Received:", msg)
 })
 
 //Sending tallies
@@ -42,4 +42,3 @@ umd.sendTallyUDP('192.168.X.X', 8900 ,tally)
 | 1     | Red    |
 | 2     | Green  |
 | 3     | Amber  |
-
