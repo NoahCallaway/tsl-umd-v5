@@ -2,7 +2,7 @@
 
 ### Installation
 ```
-npm install tsl-umd
+npm install tsl-umd-v5
 ```
 
 ### Example 
@@ -33,4 +33,13 @@ tally = {
 
 umd.sendTallyUDP('192.168.X.X', 8900 ,tally)
 ```
+
+### Tally Values
+
+| Value | Colour |
+|-------|--------|
+| 0     | Off    |
+| 1     | Red    |
+| 2     | Green  |
+| 3     | Amber  |
 
