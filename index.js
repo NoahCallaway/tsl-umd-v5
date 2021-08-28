@@ -1,4 +1,5 @@
 const dgram        = require('dgram')
+const net          = require('net')
 const debug        = require('debug')('tsl-umd-v5')
 const EventEmitter = require('events');
 
@@ -16,30 +17,50 @@ class TSL5 extends EventEmitter {
     }
 
     listenUDP(port) {
-        this.server = dgram.createSocket('udp4')
-        this.server.bind(port)
+        var server = dgram.createSocket('udp4')
+        server.bind(port)
 
-        this.server.on('message',(msg, rinfo) => {
-            this.processTally(msg,rinfo)
-            debug('Message recieved: ', msg)
+        server.on('message',(msg, rinfo) => {
+            this.processTally(msg, rinfo.address)
+            debug('UDP Message recieved: ', msg)
         })
 
-        this.server.on('listening', () => {
-            var address = this.server.address();
+        server.on('listening', () => {
+            var address = server.address();
             debug(`server listening ${address.address}:${address.port}`);
         });
 
-        this.server.on('error', (err) => {
-            debug('server error: ', err);
+        server.on('error', (err) => {
+            debug('UDP server error: ', err);
             throw err;
         });
     }
 
-    processTally(data,rinfo) {
+    listenTCP(port) {
+        var server = net.createServer((socket) => {
+
+            socket.on('data', (data) => {
+                this.processTally(data)
+                debug('TCP Message recieved: ', data)
+            })
+
+            socket.on('close', () => {
+                debug('TCP socket closed')
+            })
+
+            socket.on('error', (err) => {
+                debug('UDP server error: ', err);
+                throw err;
+            })
+        })
+        server.listen(port)
+    }
+
+    processTally(data, source) {
         let buf = Buffer.from(data)
         let tally = { display: {} }
 
-        tally.sender  = rinfo.address
+        tally.sender  = source ? source : undefined
         tally.pbc     = buf.readInt16LE(this._PBC)
         tally.ver     = buf.readInt8(this._VER)
         tally.flags   = buf.readInt8(this._VER)
@@ -56,7 +77,7 @@ class TSL5 extends EventEmitter {
 		tally.display.reserved     = (tally.control >> 8 & 0b1111111);
 		tally.display.control_data = (tally.control >> 15 & 0b1);
 
-        this.emit('message',tally)
+        this.emit('message', tally)
     }
 
     constructPacket(tally) {
@@ -105,19 +126,45 @@ class TSL5 extends EventEmitter {
             }
             let msg = this.constructPacket(tally)
     
-            let client = dgram.createSocket('udp4');
+            let client = dgram.createSocket('udp4')
             
             client.send(msg, port, ip, function(error) {
                 if (error) {
                     debug('Error sending TSL 5 UDP tally:', error)
                 } else {
-                    debug('TSL 5 UDP Data sent.');
+                    debug('TSL 5 UDP Data sent.')
                 }
-                client.close();
+                client.close()
             });
         }
         catch (error) {
             debug('Error sending TSL 5 UDP tally:', error);
+        }
+    }
+
+    sendTallyTCP(ip, port, tally) {
+        try {		
+            if (!ip | !port | !tally){
+                throw 'Missing Parameter from call sendTallyTCP()'
+            }
+            let msg = this.constructPacket(tally)
+    
+            let client = new net.Socket()
+            client.connect(port, ip);
+            
+            client.on('connect', () => {
+                client.write(msg)
+                client.end()
+                client.destroy()
+                debug('TSL 5 TCP Data sent.')
+
+            })
+            client.on('error', (error) => {
+                debug('Error sending TSL 5 TCP tally:', error)
+            })
+        }
+        catch (error) {
+            debug('Error sending TSL 5 TCP tally:', error);
         }
     }
 }

@@ -11,8 +11,11 @@ const TSL5 = require('./tsl-umd-v5')
 
 var umd = new TSL5()
 
-//Listening for tallies
+//Listen for UDP tallies
 umd.listenUDP(8900)
+
+//Listen for TCP tallies
+umd.listenTCP(9000)
 
 umd.on('message', (msg) => {
     console.log("Tally Received:", msg)
@@ -30,8 +33,11 @@ tally = {
         "text": "Test Tally"
     }
 }
+//Send UDP tally
+umd.sendTallyUDP('192.168.X.X', 8900, tally)
 
-umd.sendTallyUDP('192.168.X.X', 8900 ,tally)
+//Send TCP tally
+umd.sendTallyTCP('192.168.X.X', 9000, tally)
 ```
 
 ### Tally Values
@@ -42,3 +48,11 @@ umd.sendTallyUDP('192.168.X.X', 8900 ,tally)
 | 1     | Red    |
 | 2     | Green  |
 | 3     | Amber  |
+
+### npm
+
+ - <https://www.npmjs.com/package/tsl-umd-v5>
+
+### git
+
+ - <https://github.com/NoahCallaway/tsl-umd-v5>
