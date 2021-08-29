@@ -40,7 +40,7 @@ class TSL5 extends EventEmitter {
         var server = net.createServer((socket) => {
 
             socket.on('data', (data) => {
-                this.processTally(data)
+                this.processTally(data, socket.remoteAddress)
                 debug('TCP Message recieved: ', data)
             })
 
