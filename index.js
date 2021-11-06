@@ -6,6 +6,9 @@ const EventEmitter = require('events');
 class TSL5 extends EventEmitter {
     constructor () {
         super()
+        this._DLE = 0xFE
+        this._STX = 0x02
+
         //Message Format
         this._PBC     = 0 //offset
         this._VER     = 2
@@ -60,6 +63,17 @@ class TSL5 extends EventEmitter {
         let buf = Buffer.from(data)
         let tally = { display: {} }
 
+        //Strip DLE/STX if present and un-stuff any DLE stuffing
+        if (buf[0] == this._DLE && buf[1] == this._STX) {
+            buf = buf.subarray(2)
+            
+            for (let index = 4; index < buf.length; index++) {
+
+                if ((buf[index] == this._DLE) && (buf[index + 1] == this._DLE)) {
+                  buf = Buffer.concat([buf.subarray(0, index), buf.subarray(index + 2)])
+                }
+              }
+        }
         tally.sender  = source ? source : undefined
         tally.pbc     = buf.readInt16LE(this._PBC)
         tally.ver     = buf.readInt8(this._VER)
@@ -116,7 +130,17 @@ class TSL5 extends EventEmitter {
         let msgLength = Buffer.byteLength(bufUMD) - 2
         bufUMD.writeUInt16LE(msgLength, this._PBC)
 
-        return bufUMD
+        //Add DLE/STX and stuffing
+        let packetBuf = Buffer.from([this._DLE, this._STX])
+
+        for(let i = 0; i < bufUMD.length; i++) {
+            if (bufUMD[i] == this._DLE) {
+                packetBuf = Buffer.concat([packetBuf, Buffer.from([this._DLE, this._DLE])])
+            } else {
+                packetBuf = Buffer.concat([packetBuf, Buffer.from([bufUMD[i]])])
+            }
+        }
+        return packetBuf
     }
 
     sendTallyUDP(ip, port, tally) {
