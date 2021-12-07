@@ -56,3 +56,21 @@ umd.sendTallyTCP('192.168.X.X', 9000, tally)
 ### git
 
  - <https://github.com/NoahCallaway/tsl-umd-v5>
+
+<br>
+
+---
+
+### DLE/STX Sequence
+
+By default, the DLE/STX sequence is **enabled on TCP** packets and **disabled on UDP** packets as specified [here](https://tslproducts.com/media/1959/tsl-umd-protocol.pdf).
+
+If necessary, use the `sequence` argument to override the defaults.
+
+```javascript
+//Send UDP tally with DLE/STX forced ON
+umd.sendTallyUDP('192.168.X.X', 8900, tally, true)
+
+//Send TCP tally with DLE/STX forced OFF
+umd.sendTallyTCP('192.168.X.X', 9000, tally, false)
+```

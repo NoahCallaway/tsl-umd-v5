@@ -94,7 +94,7 @@ class TSL5 extends EventEmitter {
         this.emit('message', tally)
     }
 
-    constructPacket(tally) {
+    constructPacket(tally, sequence) {
         let bufUMD = Buffer.alloc(12)
 
         if (!tally.index) { 
@@ -130,26 +130,36 @@ class TSL5 extends EventEmitter {
         let msgLength = Buffer.byteLength(bufUMD) - 2
         bufUMD.writeUInt16LE(msgLength, this._PBC)
 
-        //Add DLE/STX and stuffing
-        let packetBuf = Buffer.from([this._DLE, this._STX])
+        //Add DLE/STX and stuffing if needed
+        if (sequence) {
+            let packetBuf = Buffer.from([this._DLE, this._STX])
 
-        for(let i = 0; i < bufUMD.length; i++) {
-            if (bufUMD[i] == this._DLE) {
-                packetBuf = Buffer.concat([packetBuf, Buffer.from([this._DLE, this._DLE])])
-            } else {
-                packetBuf = Buffer.concat([packetBuf, Buffer.from([bufUMD[i]])])
+            for(let i = 0; i < bufUMD.length; i++) {
+                if (bufUMD[i] == this._DLE) {
+                    packetBuf = Buffer.concat([packetBuf, Buffer.from([this._DLE, this._DLE])])
+                } else {
+                    packetBuf = Buffer.concat([packetBuf, Buffer.from([bufUMD[i]])])
+                }
             }
+            return packetBuf
+
+        } else {
+            return bufUMD
         }
-        return packetBuf
     }
 
-    sendTallyUDP(ip, port, tally) {
+    sendTallyUDP(ip, port, tally, sequence) {
         try {		
             if (!ip | !port | !tally){
                 throw 'Missing Parameter from call sendTallyUDP()'
             }
-            let msg = this.constructPacket(tally)
-    
+            if (sequence == null) {
+                debug('No DLE/STX sequence by default for UDP.')
+                sequence = false
+            }
+
+            let msg = this.constructPacket(tally, sequence)
+
             let client = dgram.createSocket('udp4')
             
             client.send(msg, port, ip, function(error) {
@@ -166,13 +176,18 @@ class TSL5 extends EventEmitter {
         }
     }
 
-    sendTallyTCP(ip, port, tally) {
+    sendTallyTCP(ip, port, tally, sequence) {
         try {		
             if (!ip | !port | !tally){
                 throw 'Missing Parameter from call sendTallyTCP()'
             }
-            let msg = this.constructPacket(tally)
-    
+            if (sequence == null) {
+                debug('Adding DLE/STX sequence by default for TCP.')
+                sequence = true
+            }
+
+            let msg = this.constructPacket(tally, sequence)
+            
             let client = new net.Socket()
             client.connect(port, ip);
             
