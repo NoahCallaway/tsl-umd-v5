@@ -7,7 +7,7 @@ npm install tsl-umd-v5
 
 ### Example 
 ```javascript
-const TSL5 = require('./tsl-umd-v5')
+const TSL5 = require('tsl-umd-v5')
 
 var umd = new TSL5()
 
