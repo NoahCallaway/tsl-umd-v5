@@ -98,7 +98,7 @@ class TSL5 extends EventEmitter {
         let bufUMD = Buffer.alloc(12)
 
         if (!tally.index) { 
-            tally.index = 1 //default to index 1
+            tally.index = 0 //default to index 0
         }
     
         bufUMD.writeUInt16LE(tally.screen, this._SCREEN) 
