@@ -97,7 +97,7 @@ class TSL5 extends EventEmitter {
     constructPacket(tally, sequence) {
         let bufUMD = Buffer.alloc(12)
 
-        if (!tally.index) { 
+        if (tally.index !== 0 && !tally.index) { 
             tally.index = 1 //default to index 1
         }
     
